@@ -1,0 +1,100 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+  branches:
+    include:
+    - master
+variables:
+- name: buildConfiguration
+  value: 'Release'
+stages:
+- stage: BuildApplication
+  displayName: Build Application
+  jobs:
+  - job: Build
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: CmdLine@2
+      inputs:
+        script: dotnet restore
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        command: build
+        projects: '**/*.csproj'
+        arguments: '--configuration Release'
+    - task: DotNetCoreCLI@2
+      displayName: Test
+      inputs:
+        command: test
+        projects: '**/*Tests/*.csproj'
+        arguments: '--configuration $(BuildConfiguration)'
+    - task: DotNetCoreCLI@2
+      displayName: Publish
+      inputs:
+        command: publish
+        publishWebProjects: True
+        arguments: '--configuration $(BuildConfiguration) --output $(build.artifactstagingdirectory)'
+        zipAfterPublish: True
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact'
+      inputs:
+        PathtoPublish: '$(build.artifactstagingdirectory)'
+        ArtifactName: 'drop'
+      condition: succeededOrFailed()
+- stage: DeploytoDev
+  displayName: Deploy to Dev
+  jobs:
+  - deployment: 'DeployToDev'
+    displayName: Deploy To Dev Environment
+    pool:
+      vmImage: ubuntu-latest
+    environment:
+      name: 'Dev'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@1
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'MCAPS-adomonir-feracho(1)(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
+              appType: 'webApp'
+              WebAppName: 'pul-yaml-aomonira2023'
+              packageForLinux: '$(System.ArtifactsDirectory)/drop/*.zip'
+- stage: DeploytoProd
+  displayName: Deploy to Production
+  jobs:
+  - deployment: 'DeployToProduction'
+    displayName: Deploy To Prod Environment
+    pool:
+      vmImage: ubuntu-latest
+    environment:
+      name: 'Production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@1
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: 'MCAPS-adomonir-feracho(1)(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
+              appType: 'webApp'
+              WebAppName: 'pul-addy-prod'
+              packageForLinux: '$(System.ArtifactsDirectory)/drop/*.zip'
