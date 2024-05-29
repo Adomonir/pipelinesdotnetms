@@ -68,7 +68,7 @@ stages:
           - task: AzureRmWebAppDeployment@4
             inputs:
               ConnectionType: 'AzureRM'
-              azureSubscription: 'MCAPS-adomonir-feracho(1)(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
+              azureSubscription: 'MCAPS-adomonir-feracho(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
               appType: 'webApp'
               WebAppName: 'pul-yaml-aomonira2023'
               packageForLinux: '$(System.ArtifactsDirectory)/drop/*.zip'
@@ -94,7 +94,7 @@ stages:
           - task: AzureRmWebAppDeployment@4
             inputs:
               ConnectionType: 'AzureRM'
-              azureSubscription: 'MCAPS-adomonir-feracho(1)(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
+              azureSubscription: 'MCAPS-adomonir-feracho(b71af3b4-fe19-4c32-8679-c5a39cf47108)'
               appType: 'webApp'
               WebAppName: 'pul-addy-prod'
               packageForLinux: '$(System.ArtifactsDirectory)/drop/*.zip'
